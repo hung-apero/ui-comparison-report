@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TeraBot UI Comparison</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 {
+            color: #1a73e8;
+        }
+        .comparison-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .comparison-table th, .comparison-table td {
+            border: 1px solid #ddd;
+            padding: 12px;
+            text-align: left;
+        }
+        .comparison-table th {
+            background-color: #f2f2f2;
+        }
+        .component {
+            margin-bottom: 30px;
+            border: 1px solid #e0e0e0;
+            border-radius: 8px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }
+        .code-block {
+            background-color: #f5f5f5;
+            border-left: 4px solid #1a73e8;
+            padding: 15px;
+            margin: 15px 0;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #ffff99;
+            padding: 2px;
+        }
+        .missing {
+            color: #d32f2f;
+            font-weight: bold;
+        }
+        .present {
+            color: #388e3c;
+            font-weight: bold;
+        }
+        .section {
+            margin-bottom: 40px;
+        }
+    </style>
+</head>
+<body>
+    <h1>TeraBot UI Comparison: Implementation vs. Figma Design</h1>
+    
+    <div class="section">
+        <h2>Overview</h2>
+        <p>This document compares the current Jetpack Compose implementation of the TeraBot app's main screen with the Figma design (node-id=1966-3844).</p>
+    </div>
+    
+    <div class="section">
+        <h2>Main Screen Structure</h2>
+        <div class="component">
+            <h3>Implementation Overview</h3>
+            <p>The main screen consists of the following key components:</p>
+            <ul>
+                <li><strong>Background:</strong> Custom background image shown only when on the chat tab</li>
+                <li><strong>Top Bar:</strong> Contains settings button, app title (conditional), and subscription button</li>
+                <li><strong>Content Area:</strong> HorizontalPager with 3 tabs (Chat, Assistant, History)</li>
+                <li><strong>Navigation Bar:</strong> Bottom navigation with 3 items</li>
+                <li><strong>Banner Ads:</strong> Appears at the bottom</li>
+            </ul>
+            
+            <div class="code-block">
+                <pre>
+Box {
+    // Background
+    ChatScreenBackground(enabled = pagerState.currentPage == 0)
+    
+    Column {
+        // Top Bar
+        MainTopBar()
+        
+        // Content Area
+        HorizontalPager() { /* Content for each tab */ }
+        
+        // Navigation Bar
+        MainNavigationBar()
+        
+        // Banner Ads
+        BannerAdsView()
+    }
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Component Analysis</h2>
+        
+        <div class="component">
+            <h3>1. Top Bar (MainTopBar.kt)</h3>
+            <p>The top bar implements the following features:</p>
+            <ul>
+                <li>Settings button (left side)</li>
+                <li>Report button (left side, conditional visibility)</li>
+                <li>App name (center, conditional visibility)</li>
+                <li>Subscription button with star icon and "PRO" text (right side, conditional visibility)</li>
+            </ul>
+            
+            <div class="code-block">
+                <pre>
+Box(modifier = Modifier.padding(vertical = 16.dp, horizontal = 16.dp)) {
+    Row {
+        // Left side
+        Row {
+            SettingsButton()
+            if (isVisibleReport) {
+                IconButton { Icon(R.drawable.ic_report_chatbot) }
+            }
+        }
+        
+        // Center
+        if (visibleAppName) {
+            Text("app_name", fontWeight = FontWeight.Bold, fontSize = 22.sp)
+        }
+        
+        // Right side
+        if (enableSubButton) {
+            SubscriptionButton()
+        }
+    }
+}</pre>
+            </div>
+        </div>
+        
+        <div class="component">
+            <h3>2. Navigation Bar (MainNavigationBar.kt)</h3>
+            <p>The bottom navigation implements:</p>
+            <ul>
+                <li>3 navigation items (Chat, Assistant, History)</li>
+                <li>Custom icons for selected/unselected states</li>
+                <li>Text labels for each item</li>
+                <li>Material3 NavigationBar component with custom colors</li>
+            </ul>
+            
+            <div class="code-block">
+                <pre>
+NavigationBar(
+    containerColor = AppColor.Black.EerieBlack,
+    contentColor = AppColor.White.White100
+) {
+    navigationTabs.forEachIndexed { index, item ->
+        NavigationBarItem(
+            icon = { Icon(if (selected) item.selectedIconRes else item.unSelectedIconRes) },
+            label = { Text(item.titleRes) },
+            selected = selectedItemIndex == index,
+            onClick = { onItemSelected(index) },
+            colors = NavigationBarItemDefaults.colors(
+                selectedIconColor = AppColor.White.White100,
+                unselectedIconColor = AppColor.White.White32,
+                selectedTextColor = AppColor.White.White100,
+                unselectedTextColor = AppColor.White.White32,
+                indicatorColor = Color.Transparent
+            )
+        )
+    }
+}</pre>
+            </div>
+        </div>
+        
+        <div class="component">
+            <h3>3. Background (ChatScreenBackground.kt)</h3>
+            <p>The background is a conditional component:</p>
+            <ul>
+                <li>Only visible on the Chat tab (index = 0)</li>
+                <li>Uses a full-screen image resource (bg_chat_screen)</li>
+                <li>Scales to fill the bounds</li>
+            </ul>
+            
+            <div class="code-block">
+                <pre>
+if (enabled) {
+    Image(
+        painter = painterResource(id = R.drawable.bg_chat_screen),
+        contentDescription = null,
+        modifier = Modifier.fillMaxSize(),
+        contentScale = ContentScale.FillBounds
+    )
+}</pre>
+            </div>
+        </div>
+    </div>
+    
+    <div class="section">
+        <h2>Comparison with Figma Design</h2>
+        
+        <table class="comparison-table">
+            <thead>
+                <tr>
+                    <th>Component</th>
+                    <th>Implementation Status</th>
+                    <th>Notes</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>Main Screen Layout</td>
+                    <td class="present">Implemented</td>
+                    <td>Overall structure matches with top bar, content area, and navigation bar</td>
+                </tr>
+                <tr>
+                    <td>Top Bar</td>
+                    <td class="present">Implemented</td>
+                    <td>Includes settings button, app name, and subscription button</td>
+                </tr>
+                <tr>
+                    <td>Navigation Bar</td>
+                    <td class="present">Implemented</td>
+                    <td>3 tabs with icons and text labels</td>
+                </tr>
+                <tr>
+                    <td>Chat Tab Background</td>
+                    <td class="present">Implemented</td>
+                    <td>Custom background image shown only on chat tab</td>
+                </tr>
+                <tr>
+                    <td>Banner Ads</td>
+                    <td class="present">Implemented</td>
+                    <td>Appears at the bottom of the screen</td>
+                </tr>
+                <tr>
+                    <td>Report Button</td>
+                    <td class="present">Implemented</td>
+                    <td>Conditionally shown based on current tab</td>
+                </tr>
+                <tr>
+                    <td>Subscription Button Styling</td>
+                    <td class="present">Implemented</td>
+                    <td>Uses gradient background with star icon</td>
+                </tr>
+            </tbody>
+        </table>
+        
+        <p>Note: Without direct access to the Figma design, a pixel-perfect comparison cannot be made. The analysis is based on the existing implementation and its documented behavior.</p>
+    </div>
+    
+    <div class="section">
+        <h2>Recommendations</h2>
+        <p>To ensure pixel-perfect implementation with the Figma design, consider the following:</p>
+        <ul>
+            <li>Review exact color values including transparency/alpha channels</li>
+            <li>Verify precise spacing, padding, and margins in dp units</li>
+            <li>Check font sizes, weights, and family usage</li>
+            <li>Confirm icon designs match exactly with Figma assets</li>
+            <li>Validate conditional UI state visibility rules</li>
+            <li>Ensure correct layouts for different screen sizes</li>
+        </ul>
+    </div>
+    
+    <div class="section">
+        <h2>Additional Notes</h2>
+        <p>The current implementation follows a Model-View-Intent (MVI) architecture pattern with:</p>
+        <ul>
+            <li>Clear separation of UI components in dedicated files</li>
+            <li>State management through MainViewState</li>
+            <li>Navigation handled with horizontal pager and bottom tabs</li>
+            <li>Conditional UI visibility based on current tab</li>
+        </ul>
+    </div>
+</body>
+</html>
